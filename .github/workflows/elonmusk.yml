@@ -1,0 +1,31 @@
+name: Scrape latest @elonmusk tweet
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron:  '* * * * *'
+
+jobs:
+  scheduled:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out this repo
+      uses: actions/checkout@v2
+    - name: Fetch latest data
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TWTY_CONFIG: ${{ secrets.TWTY_CONFIG }}
+      run: |-
+        go install github.com/mattn/twty@latest
+        ./scrape-elonmusk.sh
+    - name: Commit and push if it changed
+      run: |-
+        git config user.name "Automated"
+        git config user.email "actions@users.noreply.github.com"
+        git add -A
+        timestamp=$(date -u)
+
+        git commit -m "Latest @elonmusk: ${timestamp}" || exit 0
+        git pull --rebase
+        git push
